@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>RBR&#39;s Rotating Day Schedule</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style id="css">:root{
+  --bg:#F0EEEF; --surface:#FFFFFF; --ink:#211A1D; --muted:#6B5F64; --line:#DDD5D8;
+  --locker:#7A1F2E; --locker-ink:#FFFFFF; --locker-deep:#5C1622; --bell:#E3A00F; --bell-soft:#FCEFD0;
+  --warn:#B4361F; --chip:#F1E4E7;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#171214; --surface:#211A1D; --ink:#F0E9EB; --muted:#B0A1A7; --line:#3A2E33;
+    --locker:#8E2A3B; --locker-ink:#FFFFFF; --locker-deep:#6E1F2D; --bell:#F2B92E; --bell-soft:#3A3018;
+    --warn:#F08A72; --chip:#35252B;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#171214; --surface:#211A1D; --ink:#F0E9EB; --muted:#B0A1A7; --line:#3A2E33;
+  --locker:#8E2A3B; --locker-ink:#FFFFFF; --locker-deep:#6E1F2D; --bell:#F2B92E; --bell-soft:#3A3018;
+  --warn:#F08A72; --chip:#35252B;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Archivo","Arial Narrow",system-ui,sans-serif;font-stretch:112%;line-height:1.15;margin:0}
+h2{font-size:1.3rem;font-weight:800}
+h3{font-size:1.05rem;font-weight:700}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--bell);outline-offset:2px}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 20px 120px}
+
+/* header */
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+.bar h1{font-size:1.15rem;font-weight:800;color:var(--muted)}
+.nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:600;font-size:.92rem}
+.btn:hover{border-color:var(--locker)}
+.btn.primary{background:var(--locker);border-color:var(--locker);color:var(--locker-ink)}
+.btn.primary:hover{background:var(--locker-deep)}
+.btn.quiet{background:transparent;border-color:transparent;color:var(--locker)}
+.btn.danger{color:var(--warn)}
+.btn[disabled]{opacity:.5;cursor:default}
+.iconbtn{width:40px;padding:8px 0;text-align:center}
+input[type=date],input[type=time],input[type=text],select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 10px;min-height:40px;max-width:100%}
+
+/* hero */
+.top{display:grid;grid-template-columns:minmax(240px,320px) 1fr;gap:20px;align-items:start}
+.locker{background:var(--locker);color:var(--locker-ink);border-radius:14px;padding:22px 22px 24px;position:relative;overflow:hidden}
+.locker::before{content:"";position:absolute;top:18px;right:20px;width:56px;height:34px;
+  background:repeating-linear-gradient(to bottom,rgba(0,0,0,.28) 0 4px,transparent 4px 9px);border-radius:3px}
+.locker .daylabel{font-size:.95rem;opacity:.85;font-weight:600}
+.letter{font-family:"Archivo","Arial Black",sans-serif;font-weight:900;font-stretch:125%;font-size:clamp(7rem,20vw,10.5rem);line-height:.85;margin:6px 0 10px;letter-spacing:-.02em}
+.letter.word{font-size:clamp(2.6rem,8vw,3.6rem);line-height:1;margin:18px 0 14px}
+.locker .date{font-weight:600;font-size:1.05rem}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{background:rgba(255,255,255,.16);border-radius:999px;padding:3px 11px;font-size:.85rem;font-weight:600}
+.tag.alert{background:var(--bell);color:#1D1606}
+.locker .note{margin-top:12px;font-size:.95rem;opacity:.92}
+.quick{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.22)}
+.quick p{margin:0 0 8px;font-size:.9rem;font-weight:600}
+.qrow,.quick.confirm{display:flex;flex-wrap:wrap;gap:6px}
+.quick.confirm p{flex-basis:100%}
+.qbtn{background:rgba(255,255,255,.14);border-color:transparent;color:inherit;font-size:.88rem;padding:7px 11px}
+.qbtn:hover{background:rgba(255,255,255,.24);border-color:transparent}
+.qbtn.strong{background:var(--bell);color:#1D1606}
+.qbtn.strong:hover{background:var(--bell)}
+.qnote{margin:14px 0 0;font-size:.85rem;opacity:.85}
+
+.now{margin-bottom:20px;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--bell);border-radius:12px;padding:14px 20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px}
+.cdbox{text-align:right}
+.cd{font-family:"Archivo",sans-serif;font-weight:900;font-stretch:110%;font-size:clamp(2.2rem,6vw,3rem);line-height:1;font-variant-numeric:tabular-nums}
+.now .big{font-family:"Archivo",sans-serif;font-weight:800;font-size:1.6rem;font-stretch:110%}
+.now .sub{color:var(--muted);font-size:.92rem}
+
+/* schedule */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.card > h2{margin-bottom:12px}
+.sched{list-style:none;margin:0;padding:0}
+.sched li{display:grid;grid-template-columns:10.5rem 1fr;gap:12px;align-items:center;padding:11px 12px;border-radius:8px;border-bottom:1px solid var(--line)}
+.sched li:last-child{border-bottom:0}
+.sched li.cur{background:var(--bell-soft);border-bottom-color:transparent;box-shadow:inset 5px 0 0 var(--bell)}
+.sched li.other{color:var(--muted)}
+.sched .time{font-variant-numeric:tabular-nums;font-size:.92rem;color:var(--muted)}
+.sched li.cur .time{color:var(--ink);font-weight:600}
+.sched .what{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.sched .per{font-family:"Archivo",sans-serif;font-weight:800;font-size:1.15rem;font-stretch:110%}
+.sched li.other .per{font-weight:600;font-size:1rem}
+.sched .blk{color:var(--muted);font-size:.85rem}
+.sched .mine{font-size:.92rem;font-weight:600;color:var(--locker)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sched .mine{color:#9CC1EA}}
+:root[data-theme="dark"] .sched .mine{color:#9CC1EA}
+.empty{color:var(--muted);padding:6px 2px}
+.pchips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}
+.pchip{background:var(--chip);border-radius:8px;padding:6px 12px;font-weight:700;font-family:"Archivo",sans-serif}
+
+/* week strip */
+.week{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.wd{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;min-width:0}
+.wd:hover{border-color:var(--locker)}
+.wd .dn{font-size:.82rem;color:var(--muted)}
+.wd .dl{font-family:"Archivo",sans-serif;font-weight:900;font-size:1.6rem;font-stretch:120%;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd .dl.small{font-size:.95rem;font-weight:700;padding:.35rem 0}
+.wd.sel{background:var(--locker);color:var(--locker-ink);border-color:var(--locker)}
+.wd.sel .dn{color:inherit;opacity:.85}
+.wd.off .dl{color:var(--muted)}
+.wd.sel .dl{color:inherit}
+.wd.today{box-shadow:inset 0 -4px 0 var(--bell)}
+
+/* lower */
+.lower{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+.seg button{width:44px;height:40px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-weight:800;font-family:"Archivo",sans-serif;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--locker);color:var(--locker-ink);border-color:var(--locker)}
+.meets{list-style:none;margin:0;padding:0}
+.meets li{display:flex;justify-content:space-between;gap:12px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:.95rem}
+.meets li:last-child{border-bottom:0}
+.meets button{background:none;border:0;padding:0;color:var(--locker);font-weight:600;cursor:pointer;text-align:left}
+.meets .t{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.hint{color:var(--muted);font-size:.9rem;margin:2px 0 10px}
+.mygrid{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center}
+.mygrid label{font-weight:700;font-family:"Archivo",sans-serif}
+
+/* admin */
+.admin{margin-top:28px;border-top:2px dashed var(--line);padding-top:24px}
+.tabs{display:flex;gap:6px;margin:12px 0 16px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 16px;font-weight:600;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.scroll{overflow-x:auto}
+table.ed{border-collapse:collapse;width:100%;min-width:600px}
+table.ed th{text-align:left;font-size:.82rem;color:var(--muted);font-weight:600;padding:6px}
+table.ed td{padding:5px 6px;border-top:1px solid var(--line)}
+table.ed tr.bad td{background:color-mix(in srgb,var(--warn) 12%,transparent)}
+table.ed input[type=text]{width:100%}
+.warnmsg{color:var(--warn);font-size:.9rem;margin:8px 0}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.9rem;font-weight:600}
+.check{display:flex;gap:8px;align-items:center;font-weight:600;font-size:.95rem}
+.check input{width:18px;height:18px}
+.changes{list-style:none;padding:0;margin:8px 0 0}
+.changes li{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
+
+.savebar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--bg);padding:12px 20px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;z-index:10}
+.savebar .btn{border-color:transparent}
+.savebar .btn.quiet{color:var(--bg)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 16px;box-shadow:0 6px 24px rgba(0,0,0,.18);z-index:20;max-width:calc(100% - 32px)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+@media (max-width:760px){
+  .top,.lower{grid-template-columns:1fr}
+  .sched li{grid-template-columns:5.6rem 1fr;padding:10px 8px}
+  .week{gap:5px}
+  .wd .dl{font-size:1.3rem}
+  .seg button{width:34px;height:38px}
+  .cdbox{text-align:left}
+}
+@media (prefers-reduced-motion:no-preference){
+  .locker .letter{animation:drop .5s cubic-bezier(.2,.8,.2,1)}
+  @keyframes drop{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
+}
+
+/* day menu (editors) */
+.herowrap{position:relative}
+.locker.editable::before{display:none}
+.menubtn{position:absolute;z-index:3;top:12px;right:14px;width:64px;height:44px;padding:6px 4px;background:transparent;border:0;border-radius:6px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.menubtn span{display:block;height:4px;border-radius:2px;background:rgba(0,0,0,.28)}
+.menubtn:hover span,.menubtn[aria-expanded="true"] span{background:rgba(255,255,255,.75)}
+.daymenu{position:absolute;top:62px;right:10px;z-index:6;width:min(270px,calc(100% - 20px));background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.22);padding:6px}
+.daymenu hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
+.mlabel{margin:6px 10px 4px;font-size:.82rem;color:var(--muted);font-weight:600}
+.mnote{margin:4px 10px 8px;font-size:.9rem}
+.mitem{display:block;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:10px 12px;font-weight:600;cursor:pointer}
+.mitem:hover{background:var(--chip)}
+.mitem.strong{background:var(--bell);color:#1D1606;margin-bottom:2px}
+
+/* manage dialog */
+dialog#mgr{width:min(900px,calc(100% - 24px));max-height:calc(100% - 32px);border:0;border-radius:14px;padding:0;background:var(--bg);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog#mgr::backdrop{background:rgba(10,16,26,.55)}
+.dhead{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--line)}
+#admin{padding:16px 20px 20px}
+#admin .tabs{margin-top:4px}
+#dfoot{position:sticky;bottom:0;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;padding:12px 20px;background:var(--surface);border-top:1px solid var(--line)}
+#dfoot .dstat{margin-right:auto;font-weight:600}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.quiet{color:#EBA6B2}}
+:root[data-theme="dark"] .btn.quiet{color:#EBA6B2}
+</style></head>
+<body><div id="root"></div>
+<script type="application/json" id="data">{"version": 1, "calendar": [["2026-10-05", "B", ""], ["2026-10-06", "C", ""], ["2026-10-07", "D", ""], ["2026-10-08", "A", ""], ["2026-10-09", "B", ""], ["2026-10-12", "C", ""], ["2026-10-13", "D", ""], ["2026-10-14", "A", ""], ["2026-10-15", "B", ""], ["2026-10-16", "C", ""], ["2026-10-19", "D", ""], ["2026-10-20", "A", ""], ["2026-10-21", "B", ""], ["2026-10-22", "C", ""], ["2026-10-23", "D", ""], ["2026-10-26", "A", ""], ["2026-10-27", "B", ""], ["2026-10-28", "C", ""], ["2026-10-29", "D", "Half Day - Staff PD"], ["2026-10-30", "A", ""], ["2026-11-02", "B", ""], ["2026-11-03", "C", ""], ["2026-11-04", "D", "End of MP 1"], ["2026-11-09", "A", ""], ["2026-11-10", "B", ""], ["2026-11-11", "C", ""], ["2026-11-12", "D", ""], ["2026-11-13", "A", ""], ["2026-11-16", "B", ""], ["2026-11-17", "C", ""], ["2026-11-18", "D", ""], ["2026-11-19", "A", ""], ["2026-11-20", "B", ""], ["2026-11-23", "C", ""], ["2026-11-24", "D", ""], ["2026-11-25", "A", "Half Day - All"], ["2026-11-30", "B", ""], ["2026-12-01", "C", ""], ["2026-12-02", "D", ""], ["2026-12-03", "A", ""], ["2026-12-04", "B", ""], ["2026-12-07", "C", ""], ["2026-12-08", "D", ""], ["2026-12-09", "A", ""], ["2026-12-10", "B", "Half Day - Staff PD"], ["2026-12-11", "C", ""], ["2026-12-14", "D", ""], ["2026-12-15", "A", ""], ["2026-12-16", "B", ""], ["2026-12-17", "C", ""], ["2026-12-18", "D", ""], ["2026-12-21", "A", ""], ["2026-12-22", "B", ""], ["2026-12-23", "C", "Half Day - All"], ["2027-01-04", "D", ""], ["2027-01-05", "A", ""], ["2027-01-06", "B", ""], ["2027-01-07", "C", ""], ["2027-01-08", "D", ""], ["2027-01-11", "A", ""], ["2027-01-12", "B", ""], ["2027-01-13", "C", ""], ["2027-01-14", "D", ""], ["2027-01-15", "A", ""], ["2027-01-19", "B", ""], ["2027-01-20", "Review", "1,2,5,6"], ["2027-01-21", "Midterm", "1 & 2"], ["2027-01-22", "Midterm", "5 & 6"], ["2027-01-25", "Review", "3, 4, 7, 8"], ["2027-01-26", "Midterm", "3 & 4"], ["2027-01-27", "Midterm", "7 & 8; End of MP 2"], ["2027-01-28", "C", ""], ["2027-01-29", "D", ""], ["2027-02-01", "A", ""], ["2027-02-02", "B", ""], ["2027-02-03", "C", ""], ["2027-02-04", "D", ""], ["2027-02-05", "A", ""], ["2027-02-08", "B", ""], ["2027-02-09", "C", ""], ["2027-02-10", "D", ""], ["2027-02-11", "A", ""], ["2027-02-12", "B", "Half Day - All"], ["2027-02-16", "C", ""], ["2027-02-17", "D", ""], ["2027-02-18", "A", ""], ["2027-02-19", "B", ""], ["2027-02-22", "C", ""], ["2027-02-23", "D", ""], ["2027-02-24", "A", ""], ["2027-02-25", "B", ""], ["2027-02-26", "C", ""], ["2027-03-01", "D", ""], ["2027-03-02", "A", ""], ["2027-03-03", "B", ""], ["2027-03-04", "C", ""], ["2027-03-05", "D", "Half Day - Staff PD"], ["2027-03-08", "A", ""], ["2027-03-09", "B", ""], ["2027-03-10", "C", ""], ["2027-03-11", "D", ""], ["2027-03-12", "A", ""], ["2027-03-15", "B", ""], ["2027-03-16", "C", ""], ["2027-03-17", "D", ""], ["2027-03-18", "A", ""], ["2027-03-19", "B", ""], ["2027-03-22", "C", ""], ["2027-03-23", "D", ""], ["2027-03-24", "A", ""], ["2027-03-25", "B", "End of MP 3"], ["2027-04-05", "C", ""], ["2027-04-06", "D", ""], ["2027-04-07", "A", ""], ["2027-04-08", "B", ""], ["2027-04-09", "C", ""], ["2027-04-12", "D", ""], ["2027-04-13", "A", ""], ["2027-04-14", "B", "Half Day - Staff PD"], ["2027-04-15", "C", ""], ["2027-04-16", "D", ""], ["2027-04-19", "A", ""], ["2027-04-20", "B", ""], ["2027-04-22", "C", ""], ["2027-04-23", "D", ""], ["2027-04-26", "A", ""], ["2027-04-27", "B", ""], ["2027-04-28", "C", ""], ["2027-04-29", "D", ""], ["2027-04-30", "A", ""], ["2027-05-03", "B", ""], ["2027-05-04", "C", ""], ["2027-05-05", "D", ""], ["2027-05-06", "A", ""], ["2027-05-07", "B", ""], ["2027-05-10", "C", ""], ["2027-05-11", "D", ""], ["2027-05-12", "A", ""], ["2027-05-13", "B", ""], ["2027-05-14", "C", ""], ["2027-05-17", "D", ""], ["2027-05-18", "A", ""], ["2027-05-19", "B", ""], ["2027-05-20", "C", ""], ["2027-05-21", "D", ""], ["2027-05-24", "A", ""], ["2027-05-25", "B", ""], ["2027-05-26", "C", ""], ["2027-05-27", "D", ""], ["2027-05-28", "A", "Half Day - All"], ["2027-06-01", "B", ""], ["2027-06-02", "C", ""], ["2027-06-03", "D", ""], ["2027-06-04", "A", ""], ["2027-06-07", "B", ""], ["2027-06-08", "Review", "3,4, 7, 8"], ["2027-06-09", "Midterms", "3 & 4"], ["2027-06-10", "Midterms", "7 & 8"], ["2027-06-11", "Review", "1, 2, 5, 6"], ["2027-06-14", "Midterms", "1 & 2"], ["2027-06-15", "Midterms", "5 & 6; End of MP 4"], ["2027-06-16", "Graduation", ""]], "rotations": {"A": [1, 2, 3, 5, 6, 7], "B": [4, 1, 2, 8, 5, 6], "C": [3, 4, 1, 7, 8, 5], "D": [2, 3, 4, 6, 7, 8]}, "schedules": [{"id": "full", "name": "Full Day", "rows": [{"label": "Block 1", "type": "class", "start": "07:40", "end": "08:35"}, {"label": "Block 2", "type": "class", "start": "08:39", "end": "09:34"}, {"label": "Block 3", "type": "class", "start": "09:38", "end": "10:31"}, {"label": "Mod 1", "type": "other", "start": "10:35", "end": "11:05"}, {"label": "Mod 2", "type": "other", "start": "11:05", "end": "11:35"}, {"label": "Block 4", "type": "class", "start": "11:39", "end": "12:32"}, {"label": "Block 5", "type": "class", "start": "12:36", "end": "13:31"}, {"label": "Block 6", "type": "class", "start": "13:35", "end": "14:30"}]}, {"id": "half", "name": "Half Day", "rows": [{"label": "Block 1", "type": "class", "start": "07:40", "end": "08:16"}, {"label": "Block 2", "type": "class", "start": "08:20", "end": "08:56"}, {"label": "Block 3", "type": "class", "start": "09:00", "end": "09:36"}, {"label": "Block 4", "type": "class", "start": "09:40", "end": "10:16"}, {"label": "Block 5", "type": "class", "start": "10:20", "end": "10:56"}, {"label": "Block 6", "type": "class", "start": "11:00", "end": "11:35"}]}, {"id": "delayed", "name": "Delayed Opening", "rows": [{"label": "Block 1", "type": "class", "start": "09:40", "end": "10:15"}, {"label": "Block 2", "type": "class", "start": "10:19", "end": "10:54"}, {"label": "Block 3", "type": "class", "start": "10:58", "end": "11:31"}, {"label": "Mod 1", "type": "other", "start": "11:35", "end": "12:05"}, {"label": "Mod 2", "type": "other", "start": "12:05", "end": "12:35"}, {"label": "Block 4", "type": "class", "start": "12:39", "end": "13:12"}, {"label": "Block 5", "type": "class", "start": "13:16", "end": "13:51"}, {"label": "Block 6", "type": "class", "start": "13:55", "end": "14:30"}]}, {"id": "assembly", "name": "Assembly", "rows": [{"label": "Block 1", "type": "class", "start": "07:40", "end": "08:20"}, {"label": "Block 2", "type": "class", "start": "08:24", "end": "09:04"}, {"label": "Block 3: 9/10 in class, 11/12 at assembly", "type": "class", "start": "09:08", "end": "10:08"}, {"label": "Block 3: 9/10 at assembly, 11/12 in class", "type": "same", "start": "10:12", "end": "11:12"}, {"label": "Mod 1: 9/10 study hall, 11/12 lunch", "type": "other", "start": "11:14", "end": "11:44"}, {"label": "Mod 2: 9/10 study hall, 11/12 lunch", "type": "other", "start": "11:44", "end": "12:14"}, {"label": "Block 4", "type": "class", "start": "12:18", "end": "12:58"}, {"label": "Block 5", "type": "class", "start": "13:02", "end": "13:42"}, {"label": "Block 6", "type": "class", "start": "13:46", "end": "14:30"}]}, {"id": "peprally", "name": "Pep Rally", "rows": [{"label": "Block 1", "type": "class", "start": "07:40", "end": "08:27"}, {"label": "Block 2", "type": "class", "start": "08:31", "end": "09:18"}, {"label": "Block 3", "type": "class", "start": "09:22", "end": "10:08"}, {"label": "Mod 1: study hall / lunch", "type": "other", "start": "10:10", "end": "10:40"}, {"label": "Mod 2: study hall / lunch", "type": "other", "start": "10:40", "end": "11:10"}, {"label": "Block 4", "type": "class", "start": "11:14", "end": "12:01"}, {"label": "Block 5", "type": "class", "start": "12:05", "end": "12:52"}, {"label": "Block 6", "type": "class", "start": "12:56", "end": "13:43"}, {"label": "Pep Rally", "type": "other", "start": "13:48", "end": "14:31"}]}], "overrides": {"2026-10-16": {"schedule": "delayed"}, "2026-10-28": {"schedule": "assembly", "note": "Hispanic Heritage Month Assembly"}}}</script>
+<script id="app">(function(){
+"use strict";
+const HEAD = "<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\"><title>RBR&#39;s Rotating Day Schedule</title><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Public+Sans:wght@400;500;600;700&display=swap\" rel=\"stylesheet\">";
+let DATA = JSON.parse(document.getElementById("data").textContent);
+DATA.overrides = DATA.overrides || {};
+let draft = null;               // unsaved editor copy
+let ART = null, canEdit = false, capsChecked = false;
+const cur = () => draft || DATA;
+
+/* ---------- helpers ---------- */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2, "0");
+const ds = d => d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+const pd = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const addDays = (s, n) => { const d = pd(s); d.setDate(d.getDate()+n); return ds(d); };
+const todayStr = () => ds(new Date());
+const fmtDate = (s, o) => pd(s).toLocaleDateString("en-US", o || {weekday:"long", month:"long", day:"numeric", year:"numeric"});
+const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
+const fmtT = t => { let [h,m] = t.split(":").map(Number); const ap = h >= 12 ? "pm" : "am"; h = h % 12 || 12; return h + ":" + pad(m) + " " + ap; };
+const mins = n => n < 60 ? n + " min" : Math.floor(n/60) + " hr " + (n%60 ? (n%60) + " min" : "");
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+const idxCache = new WeakMap();
+function calIndex(D){
+  let m = idxCache.get(D.calendar);
+  if (!m){ m = {}; D.calendar.forEach(r => { m[r[0]] = r; }); idxCache.set(D.calendar, m); }
+  return m;
+}
+
+/* ---------- core: what happens on a given date ---------- */
+function dayInfo(date, D){
+  D = D || cur();
+  const e = calIndex(D)[date];
+  const ov = D.overrides[date] || {};
+  const dow = pd(date).getDay();
+  const first = D.calendar[0][0], last = D.calendar[D.calendar.length-1][0];
+  const calNote = e && e[2] ? e[2] : "";
+  if (ov.closed) return {date, off:true, title:"No school", reason: ov.note || "School closed", overridden:true};
+  const letter = ov.letter || (e && e[1]);
+  if (!letter){
+    const reason = (dow === 0 || dow === 6) ? "Weekend" : "";
+    return {date, off:true, title:"No school", reason};
+  }
+  const isRot = !!D.rotations[letter];
+  const schedId = ov.schedule || (isRot ? (/half day/i.test(calNote) ? "half" : "full") : null);
+  const sched = D.schedules.find(s => s.id === schedId) || null;
+  let rows = [];
+  if (sched){
+    let ci = 0;
+    rows = sched.rows.map(r => {
+      const o = Object.assign({}, r);
+      if (r.type === "class"){ o.period = isRot ? (D.rotations[letter][ci] ?? null) : null; ci++; }
+      else if (r.type === "same"){ o.period = isRot && ci > 0 ? (D.rotations[letter][ci-1] ?? null) : null; }
+      return o;
+    });
+  }
+  let specialPeriods = [];
+  if (!isRot){ specialPeriods = ((calNote.split(";")[0]).match(/[1-8]/g) || []).map(Number); }
+  const notes = [calNote, ov.note].filter(Boolean).join("; ");
+  return {date, off:false, letter, isRot, note:notes, sched, rows, specialPeriods, overridden: !!(ov.schedule || ov.letter || ov.note)};
+}
+function stepSchoolDay(date, dir){
+  let d = date;
+  for (let i = 0; i < 400; i++){ d = addDays(d, dir); if (!dayInfo(d).off) return d; }
+  return null;
+}
+const isClassRow = r => r.type === "class" || r.type === "same";
+function rowName(r){ return isClassRow(r) ? (r.period ? "Period " + r.period : r.label) : r.label; }
+function countdown(t){
+  const n = new Date(), [h, m] = t.split(":").map(Number);
+  let sec = Math.max(0, Math.round((new Date(n.getFullYear(), n.getMonth(), n.getDate(), h, m) - n) / 1000));
+  const hh = Math.floor(sec / 3600), mm = Math.floor(sec % 3600 / 60), ss = sec % 60;
+  return (hh ? hh + ":" + pad(mm) : mm) + ":" + pad(ss);
+}
+function nowState(info){
+  if (info.off || info.date !== todayStr() || !info.rows.length) return null;
+  const n = new Date(), m = n.getHours()*60 + n.getMinutes(), rows = info.rows;
+  const s = toMin(rows[0].start), e = toMin(rows[rows.length-1].end);
+  if (m < s) return {phase:"before", next:rows[0], mins:s-m};
+  if (m >= e) return {phase:"after"};
+  for (let i = 0; i < rows.length; i++){
+    const r = rows[i];
+    if (m >= toMin(r.start) && m < toMin(r.end)) return {phase:"in", cur:r, idx:i, left:toMin(r.end)-m, next:rows[i+1]};
+  }
+  const nx = rows.find(r => toMin(r.start) > m);
+  return {phase:"passing", next:nx, mins: nx ? toMin(nx.start)-m : 0};
+}
+
+/* ---------- state ---------- */
+let sessSel = null; try { sessSel = sessionStorage.getItem("sel"); sessionStorage.removeItem("sel"); } catch(e){}
+const state = { date: sessSel || todayStr(), lastDrawn:null,
+  tab:"days", schedId:"full", dayDate:null, quick:null, menuOpen:false };
+
+/* ---------- layout ---------- */
+const root = document.getElementById("root");
+root.innerHTML =
+  '<div class="wrap">' +
+    '<header class="bar"><h1>RBR\'s Rotating Day Schedule</h1>' +
+      '<nav class="nav" aria-label="Choose a day">' +
+        '<button class="btn iconbtn" data-act="prev" aria-label="Previous school day">‹</button>' +
+        '<button class="btn" data-act="today">Today</button>' +
+        '<button class="btn iconbtn" data-act="next" aria-label="Next school day">›</button>' +
+        '<label class="vh" for="pick">Pick a date</label><input type="date" id="pick">' +
+      '</nav></header>' +
+    '<main id="view"></main>' +
+  '</div><div id="savebar"></div><div id="toastbox" aria-live="polite"></div>' +
+  '<dialog id="mgr" aria-labelledby="mgrTitle"><div class="dhead"><h2 id="mgrTitle">Manage the schedule</h2><button class="btn iconbtn" data-act="closemgr" aria-label="Close">×</button></div>' +
+  '<div id="admin"></div><div id="dfoot"></div><div class="dtoast" aria-live="polite"></div></dialog>';
+const dlg = document.getElementById("mgr");
+const $ = s => root.parentNode.querySelector(s);
+
+function setDate(d){ if (!d) return; state.date = d; state.quick = null; state.menuOpen = false; renderView(); }
+
+/* ---------- view ---------- */
+function renderView(){
+  const info = dayInfo(state.date);
+  $("#pick").value = state.date;
+  const animate = state.lastDrawn !== state.date; state.lastDrawn = state.date;
+  const isToday = state.date === todayStr();
+  let hero;
+  if (info.off){
+    const nx = stepSchoolDay(state.date, 1);
+    hero = '<div class="locker editable">' + menuButton() + '<div class="daylabel">' + (isToday ? "Today" : esc(fmtDate(state.date, {weekday:"long"}))) + '</div>' +
+      '<div class="letter word" style="' + (animate ? "" : "animation:none") + '">' + esc(info.title) + '</div>' +
+      '<div class="date">' + esc(fmtDate(state.date)) + '</div>' +
+      (info.reason ? '<div class="note">' + esc(info.reason) + '</div>' : '') +
+      '</div>';
+    const body = nx
+      ? '<p class="empty">The next school day is <strong>' + esc(fmtDate(nx, {weekday:"long", month:"long", day:"numeric"})) + '</strong>.</p><button class="btn primary" data-goto="' + nx + '">Show ' + esc(fmtDate(nx, {weekday:"short", month:"short", day:"numeric"})) + '</button>'
+      : '<p class="empty">No more school days on the calendar.</p>';
+    $("#view").innerHTML = weekStrip() + '<div class="top"><div class="herowrap">' + hero + dayMenu() + '</div><div class="card"><h2>No classes</h2>' + body + '</div></div>';
+    return;
+  }
+  const word = !info.isRot;
+  const tags = [];
+  if (info.sched) tags.push('<span class="tag' + (info.sched.id !== "full" ? " alert" : "") + '">' + esc(info.sched.name) + '</span>');
+  if (info.overridden) tags.push('<span class="tag">Changed by staff</span>');
+  hero = '<div class="locker editable">' + menuButton() + '<div class="daylabel">' + (isToday ? "Today is" : esc(fmtDate(state.date, {weekday:"long"})) + " is") + (word ? "" : " Day") + '</div>' +
+    '<div class="letter' + (word ? " word" : "") + '" style="' + (animate ? "" : "animation:none") + '">' + esc(info.letter) + '</div>' +
+    '<div class="date">' + esc(fmtDate(state.date)) + '</div>' +
+    (tags.length ? '<div class="tags">' + tags.join("") + '</div>' : '') +
+    (info.note ? '<div class="note">' + esc(info.note) + '</div>' : '') +
+    '</div>';
+
+  const ns = nowState(info);
+  let now = "";
+  if (ns){
+    const box = (label, name, detail, target, targetLabel) =>
+      '<div class="now"><div class="nowtext"><div class="sub">' + label + '</div><div class="big">' + name + '</div>' + (detail ? '<div class="sub">' + detail + '</div>' : '') + '</div>' +
+      (target ? '<div class="cdbox"><div class="cd" data-cd="' + target + '">' + countdown(target) + '</div><div class="sub">' + targetLabel + '</div></div>' : '') + '</div>';
+    if (ns.phase === "in") now = box("Right now", esc(rowName(ns.cur)), ns.next ? "Next: " + esc(rowName(ns.next)) : "Last block of the day", ns.cur.end, "left, ends at " + fmtT(ns.cur.end));
+    else if (ns.phase === "passing" && ns.next) now = box("Passing time", "Next: " + esc(rowName(ns.next)), "", ns.next.start, "until " + fmtT(ns.next.start));
+    else if (ns.phase === "before") now = box("Before school", "First up: " + esc(rowName(ns.next)), "", ns.next.start, "until the first bell at " + fmtT(ns.next.start));
+    else now = box("After school", "The school day is over", "Last bell was " + fmtT(info.rows[info.rows.length-1].end), null);
+  }
+
+  let list;
+  if (info.rows.length){
+    const curIdx = ns && ns.phase === "in" ? ns.idx : -1;
+    list = '<ol class="sched">' + info.rows.map((r, i) =>
+      '<li class="' + (!isClassRow(r) ? "other " : "") + (i === curIdx ? "cur" : "") + '"' + (i === curIdx ? ' aria-current="time"' : '') + '>' +
+        '<span class="time">' + fmtT(r.start) + ' – ' + fmtT(r.end) + '</span>' +
+        '<span class="what"><span class="per">' + esc(rowName(r)) + '</span>' +
+          (isClassRow(r) && r.period ? '<span class="blk">' + esc(r.label) + '</span>' : '') +
+        '</span></li>').join("") + '</ol>';
+    const classRows = info.rows.filter(r => r.type === "class").length;
+    if (info.isRot && classRows !== DATA.rotations[info.letter].length)
+      list += '<p class="hint">This schedule has ' + classRows + ' class blocks, but Day ' + esc(info.letter) + ' rotates through ' + cur().rotations[info.letter].length + ' periods.</p>';
+  } else {
+    list = (info.specialPeriods.length
+      ? '<p class="empty">Periods meeting:</p><div class="pchips">' + info.specialPeriods.map(p => '<span class="pchip">' + p + '</span>').join("") + '</div>'
+      : '') + '<p class="hint">No bell times are set for this day.' + (canEdit ? ' Use "Change this day" to assign a schedule.' : '') + '</p>';
+  }
+  $("#view").innerHTML = weekStrip() + now + '<div class="top"><div class="herowrap">' + hero + dayMenu() + '</div><div class="card"><h2>' + (info.sched ? esc(info.sched.name) + ' schedule' : esc(info.letter) + ' day') + '</h2>' + list + '</div></div>';
+}
+function menuButton(){
+  return '<button class="menubtn" data-act="menu" aria-label="Day options and schedule settings" aria-haspopup="true" aria-expanded="' + state.menuOpen + '"><span></span><span></span><span></span><span></span></button>';
+}
+function dayMenu(){
+  if (!state.menuOpen) return "";
+  if (!canEdit){
+    const why = !ART
+      ? (capsChecked ? "Editing isn't available in this window. Open the schedule from Claude, signed in as an editor, to make changes." : "Checking whether you can edit… try again in a moment.")
+      : "You can view this schedule, but only its editors can change it.";
+    return '<div class="daymenu" id="daymenu"><p class="mnote" style="margin:8px 10px">' + why + '</p></div>';
+  }
+  const ov = DATA.overrides[state.date] || {};
+  const inCal = !!calIndex(DATA)[state.date] || ov.closed || ov.letter;
+  const when = esc(fmtDate(state.date, {weekday:"short", month:"short", day:"numeric"}));
+  let h = '<div class="daymenu" id="daymenu">';
+  if (inCal){
+    h += '<p class="mlabel">Quick change for ' + when + '</p>';
+    if (draft) h += '<p class="mnote">Publish or discard your unpublished changes first.</p>';
+    else if (state.quick){
+      const qs = state.quick.startsWith("s:") ? DATA.schedules.find(x => x.id === state.quick.slice(2)) : null;
+      const what = qs ? "the " + esc(qs.name) + " schedule" : {closed:"a school closing", normal:"the normal schedule"}[state.quick];
+      h += '<p class="mnote">Publish ' + what + ' for ' + when + '? Everyone sees it right away.</p>' +
+        '<button class="mitem strong" data-act="quickgo">Publish now</button><button class="mitem" data-act="quickcancel">Cancel</button>';
+    } else {
+      if (!ov.closed) DATA.schedules.forEach(x => {
+        if (x.id === "full" || x.id === "half" || x.id === ov.schedule) return;
+        h += '<button class="mitem" data-quick="s:' + esc(x.id) + '">' + (x.id === "delayed" ? "Delayed opening" : esc(x.name)) + '</button>';
+      });
+      if (!ov.closed) h += '<button class="mitem" data-quick="closed">School closed</button>';
+      if (Object.keys(ov).length) h += '<button class="mitem" data-quick="normal">Back to normal</button>';
+    }
+    h += '<hr>';
+  }
+  h += '<button class="mitem" data-act="editday">Change this day…</button><button class="mitem" data-act="openmgr">Manage the schedule…</button></div>';
+  return h;
+}
+function closeMenu(focusBtn){
+  if (!state.menuOpen) return;
+  state.menuOpen = false; state.quick = null; renderView();
+  if (focusBtn){ const b = document.querySelector(".menubtn"); if (b) b.focus(); }
+}
+function openMgr(){
+  state.menuOpen = false; state.quick = null; renderView();
+  renderAdmin(); renderSaveBar();
+  if (!dlg.open) dlg.showModal();
+}
+function weekStrip(){
+  const d = pd(state.date), dow = d.getDay();
+  const mon = addDays(state.date, dow === 0 ? 1 : dow === 6 ? 2 : 1 - dow);
+  const today = todayStr();
+  let h = '<div class="week" role="group" aria-label="This week">';
+  for (let i = 0; i < 5; i++){
+    const day = addDays(mon, i), info = dayInfo(day);
+    const lab = info.off ? (info.reason === "Weekend" ? "–" : "No school") : info.letter;
+    const small = info.off ? lab !== "–" : !info.isRot;
+    h += '<button class="wd' + (day === state.date ? " sel" : "") + (info.off ? " off" : "") + (day === today ? " today" : "") + '" data-goto="' + day + '" aria-label="' + esc(fmtDate(day, {weekday:"long", month:"long", day:"numeric"}) + ": " + (info.off ? "no school" : (info.isRot ? "Day " : "") + info.letter)) + '">' +
+      '<div class="dn">' + esc(fmtDate(day, {weekday:"short"})) + ' ' + pd(day).getDate() + '</div><div class="dl' + (small ? " small" : "") + '">' + esc(lab) + '</div></button>';
+  }
+  return h + '</div>';
+}
+
+/* ---------- editor (Editors only) ---------- */
+function ensureDraft(){ if (!draft) draft = JSON.parse(JSON.stringify(DATA)); return draft; }
+function changed(){ renderView(); renderAdmin(); renderSaveBar(); }
+function renderAdmin(){
+  const box = $("#admin");
+  if (!canEdit){ box.innerHTML = ""; if (dlg.open) dlg.close(); return; }
+  const D = cur();
+  let h = '<p class="hint">Changes preview on the page right away. Everyone else sees them after you publish.</p>' +
+    '<div class="tabs" role="tablist"><button role="tab" data-tab="days" aria-selected="' + (state.tab === "days") + '">Change a day</button>' +
+    '<button role="tab" data-tab="bells" aria-selected="' + (state.tab === "bells") + '">Bell schedules</button></div>';
+  if (state.tab === "days"){
+    const dd = state.dayDate || state.date;
+    const ov = D.overrides[dd] || {};
+    const e = calIndex(D)[dd];
+    h += '<div class="card"><h3 style="margin-bottom:12px">Change one day</h3><div class="row">' +
+      '<label class="field">Date<input type="date" data-day="date" value="' + dd + '"></label>' +
+      '<label class="field">Bell schedule<select data-day="schedule"><option value="">Normal for this day</option>' +
+        D.schedules.map(s => '<option value="' + esc(s.id) + '"' + (ov.schedule === s.id ? " selected" : "") + '>' + esc(s.name) + '</option>').join("") + '</select></label>' +
+      '<label class="field">Rotation day<select data-day="letter"><option value="">' + (e ? 'From calendar (' + esc(e[1]) + ')' : 'From calendar (none)') + '</option>' +
+        Object.keys(D.rotations).map(L => '<option' + (ov.letter === L ? " selected" : "") + '>' + esc(L) + '</option>').join("") + '</select></label>' +
+      '</div><div class="row"><label class="field" style="flex:1;min-width:220px">Note shown to everyone<input type="text" data-day="note" maxlength="80" placeholder="e.g. Pep rally after Block 3" value="' + esc(ov.note || "") + '"></label></div>' +
+      '<div class="row"><label class="check"><input type="checkbox" data-day="closed"' + (ov.closed ? " checked" : "") + '> School closed (snow day, emergency)</label></div>' +
+      '<div class="row"><button class="btn primary" data-act="applyday">Apply to ' + esc(fmtDate(dd, {month:"short", day:"numeric"})) + '</button>' +
+        (D.overrides[dd] ? '<button class="btn danger" data-act="clearday" data-date="' + dd + '">Undo changes to this day</button>' : '') + '</div>';
+    const keys = Object.keys(D.overrides).sort();
+    h += '<h3 style="margin-top:18px">Changed days</h3>' + (keys.length ? '<ul class="changes">' + keys.map(k => {
+      const o = D.overrides[k], bits = [];
+      if (o.closed) bits.push("Closed");
+      if (o.schedule){ const s = D.schedules.find(x => x.id === o.schedule); bits.push(s ? s.name : "Missing schedule"); }
+      if (o.letter) bits.push("Day " + o.letter);
+      if (o.note) bits.push('"' + o.note + '"');
+      return '<li><span><strong>' + esc(fmtDate(k, {weekday:"short", month:"short", day:"numeric"})) + '</strong>: ' + esc(bits.join(", ")) + '</span><span><button class="btn quiet" data-editdate="' + k + '">Edit</button><button class="btn quiet danger" data-act="clearday" data-date="' + k + '">Remove</button></span></li>';
+    }).join("") + '</ul>' : '<p class="empty">No days have been changed yet. Pick a date above to set a delayed opening, a closing, or a special bell schedule.</p>') + '</div>';
+  } else {
+    if (!D.schedules.find(s => s.id === state.schedId)) state.schedId = D.schedules[0].id;
+    const s = D.schedules.find(x => x.id === state.schedId);
+    const builtin = ["full", "half", "delayed"].includes(s.id);
+    h += '<div class="card"><div class="row"><label class="field">Schedule<select data-bell="pick">' +
+      D.schedules.map(x => '<option value="' + esc(x.id) + '"' + (x.id === s.id ? " selected" : "") + '>' + esc(x.name) + '</option>').join("") + '</select></label>' +
+      '<button class="btn" data-act="dupsched">Copy as new schedule</button><button class="btn" data-act="newsched">New blank schedule</button></div>' +
+      '<div class="row"><label class="field" style="min-width:240px">Name<input type="text" data-bell="name" maxlength="40" value="' + esc(s.name) + '"' + (builtin ? ' disabled title="Built-in schedules keep their names"' : '') + '></label></div>';
+    let problems = [];
+    h += '<div class="scroll"><table class="ed"><thead><tr><th>Block name</th><th>Kind</th><th>Starts</th><th>Ends</th><th><span class="vh">Actions</span></th></tr></thead><tbody>' +
+      s.rows.map((r, i) => {
+        let bad = toMin(r.end) <= toMin(r.start);
+        if (bad) problems.push(r.label + " ends before it starts.");
+        if (i > 0 && toMin(r.start) < toMin(s.rows[i-1].end)){ bad = true; problems.push(r.label + " starts before " + s.rows[i-1].label + " ends."); }
+        return '<tr' + (bad ? ' class="bad"' : '') + '><td><input type="text" aria-label="Block name" data-row="' + i + '" data-f="label" maxlength="60" value="' + esc(r.label) + '"></td>' +
+          '<td><select aria-label="Kind" data-row="' + i + '" data-f="type"><option value="class"' + (r.type === "class" ? " selected" : "") + '>Class period</option><option value="same"' + (r.type === "same" ? " selected" : "") + '>Same period as row above</option><option value="other"' + (!isClassRow(r) ? " selected" : "") + '>Other (lunch, mod, assembly)</option></select></td>' +
+          '<td><input type="time" aria-label="Starts" data-row="' + i + '" data-f="start" value="' + esc(r.start) + '"></td>' +
+          '<td><input type="time" aria-label="Ends" data-row="' + i + '" data-f="end" value="' + esc(r.end) + '"></td>' +
+          '<td style="white-space:nowrap"><button class="btn iconbtn" data-rowact="up" data-row="' + i + '" aria-label="Move up"' + (i === 0 ? " disabled" : "") + '>↑</button> ' +
+          '<button class="btn iconbtn" data-rowact="down" data-row="' + i + '" aria-label="Move down"' + (i === s.rows.length-1 ? " disabled" : "") + '>↓</button> ' +
+          '<button class="btn iconbtn danger" data-rowact="del" data-row="' + i + '" aria-label="Remove row">×</button></td></tr>';
+      }).join("") + '</tbody></table></div>';
+    const nClass = s.rows.filter(r => r.type === "class").length, need = Math.max(...Object.values(D.rotations).map(a => a.length));
+    if (nClass !== need) problems.push("This schedule has " + nClass + " class periods; rotation days need " + need + ".");
+    h += problems.map(p => '<p class="warnmsg">' + esc(p) + '</p>').join("");
+    h += '<div class="row" style="margin-top:12px"><button class="btn" data-act="addrow">Add a row</button>' +
+      (builtin ? '' : '<button class="btn danger" data-act="delsched">Delete this schedule</button>') + '</div>' +
+      '<p class="hint">Class periods are filled in order with the day\'s rotation (Day A: 1, 2, 3, 5, 6, 7). "Other" rows, like a pep rally, sit between them without using up a period. "Same period as row above" repeats the class before it, for a block split by grade.</p></div>';
+  }
+  box.innerHTML = h;
+}
+function renderSaveBar(){
+  $("#dfoot").innerHTML = draft
+    ? '<span class="dstat">You have unpublished changes.</span><button class="btn quiet" data-act="discard">Discard</button><button class="btn primary" data-act="publish">Publish changes</button>'
+    : '<button class="btn" data-act="closemgr">Done</button>';
+  $("#savebar").innerHTML = draft ? '<div class="savebar"><span>You have unpublished changes.</span><button class="btn primary" data-act="publish">Publish changes</button><button class="btn quiet" data-act="discard">Discard</button></div>' : "";
+}
+let toastT;
+function toast(msg){ const b = dlg.open ? dlg.querySelector(".dtoast") : $("#toastbox"); b.innerHTML = '<div class="toast">' + esc(msg) + '</div>'; clearTimeout(toastT); toastT = setTimeout(() => { b.innerHTML = ""; }, 5000); }
+
+function buildPage(data){
+  const json = JSON.stringify(data).replace(/</g, "\\u003c");
+  return "<!doctype html>\n<html lang=\"en\">\n<head>" + HEAD + "<style id=\"css\">" + document.getElementById("css").textContent + "</style></head>\n<body><div id=\"root\"></div>\n<script type=\"application/json\" id=\"data\">" + json + "<\/script>\n<script id=\"app\">" + document.getElementById("app").textContent + "<\/script>\n</body></html>";
+}
+function goReadOnly(){ canEdit = false; draft = null; state.menuOpen = false; if (dlg.open) dlg.close(); renderAdmin(); renderSaveBar(); renderView(); }
+async function publish(data, btnSel, label){
+  data = data || draft; btnSel = btnSel || '[data-act="publish"]'; label = label || "Publish changes";
+  if (!data || !ART) return;
+  const btn = document.querySelector("dialog[open] " + btnSel) || document.querySelector(btnSel); if (btn){ btn.disabled = true; btn.textContent = "Publishing…"; }
+  try { sessionStorage.setItem("sel", state.date); } catch(e){}
+  try {
+    await ART.publish(buildPage(data));
+  } catch(err){
+    const code = err && err.code;
+    if (btn){ btn.disabled = false; btn.textContent = label; }
+    if (code === "conflict") toast("Someone else published first. Loading their version now.");
+    else if (["not_writer", "not_granted", "consent_required", "capability_disabled", "capability_removed", "not_declared"].includes(code)){ goReadOnly(); toast("This view is read-only, so changes can't be published from here."); }
+    else if (code === "rate_limited") toast("Too many publishes in a short time. Wait a minute, then publish again.");
+    else toast("Publishing didn't go through" + (err && err.message ? ": " + err.message : "") + ". Your changes are still here.");
+  }
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", ev => {
+  if (ev.target === dlg){ dlg.close(); return; }
+  if (state.menuOpen && !ev.target.closest("#daymenu, .menubtn")){ closeMenu(false); if (!ev.target.closest("button")) return; }
+  const t = ev.target.closest("button"); if (!t) return;
+  if (t.dataset.goto){ setDate(t.dataset.goto); return; }
+  if (t.dataset.quick){ state.quick = t.dataset.quick; renderView(); const c = document.querySelector('[data-act="quickgo"]'); if (c) c.focus(); return; }
+  if (t.dataset.act === "menu"){
+    if (state.menuOpen){ closeMenu(true); return; }
+    state.menuOpen = true; state.quick = null; renderView();
+    const f = document.querySelector("#daymenu button"); if (f) f.focus(); return;
+  }
+  if (t.dataset.tab){ state.tab = t.dataset.tab; renderAdmin(); return; }
+  if (t.dataset.editdate){ state.dayDate = t.dataset.editdate; renderAdmin(); return; }
+  if (t.dataset.rowact){
+    const D = ensureDraft(), s = D.schedules.find(x => x.id === state.schedId), i = +t.dataset.row;
+    if (t.dataset.rowact === "del") s.rows.splice(i, 1);
+    else { const j = t.dataset.rowact === "up" ? i-1 : i+1; [s.rows[i], s.rows[j]] = [s.rows[j], s.rows[i]]; }
+    changed(); return;
+  }
+  const a = t.dataset.act;
+  if (a === "prev") setDate(stepSchoolDay(state.date, -1));
+  else if (a === "next") setDate(stepSchoolDay(state.date, 1));
+  else if (a === "today") setDate(todayStr());
+  else if (a === "editday"){ state.tab = "days"; state.dayDate = state.date; openMgr(); }
+  else if (a === "openmgr") openMgr();
+  else if (a === "closemgr") dlg.close();
+  else if (a === "applyday"){
+    const box = $("#admin"), dd = box.querySelector('[data-day="date"]').value; if (!dd) return toast("Pick a date first.");
+    const o = {};
+    const sc = box.querySelector('[data-day="schedule"]').value, L = box.querySelector('[data-day="letter"]').value, n = box.querySelector('[data-day="note"]').value.trim();
+    if (box.querySelector('[data-day="closed"]').checked) o.closed = true;
+    if (sc) o.schedule = sc; if (L) o.letter = L; if (n) o.note = n;
+    const D = ensureDraft();
+    if (Object.keys(o).length) D.overrides[dd] = o; else delete D.overrides[dd];
+    state.dayDate = dd; state.date = dd; changed(); toast("Updated " + fmtDate(dd, {month:"short", day:"numeric"}) + ". Publish to share it.");
+  }
+  else if (a === "clearday"){ delete ensureDraft().overrides[t.dataset.date]; changed(); }
+  else if (a === "addrow"){
+    const s = ensureDraft().schedules.find(x => x.id === state.schedId), last = s.rows[s.rows.length-1];
+    const st = last ? last.end : "08:00", m = toMin(st) + 30;
+    s.rows.push({label:"New block", type:"other", start:st, end: pad(Math.floor(m/60) % 24) + ":" + pad(m % 60)});
+    changed();
+  }
+  else if (a === "dupsched" || a === "newsched"){
+    const D = ensureDraft(), src = D.schedules.find(x => x.id === state.schedId);
+    const id = "s" + Date.now().toString(36);
+    D.schedules.push(a === "dupsched"
+      ? {id, name: src.name + " (copy)", rows: JSON.parse(JSON.stringify(src.rows))}
+      : {id, name:"New schedule", rows:[{label:"Block 1", type:"class", start:"07:40", end:"08:30"}]});
+    state.schedId = id; changed();
+  }
+  else if (a === "delsched"){
+    const D = ensureDraft(), used = Object.keys(D.overrides).filter(k => D.overrides[k].schedule === state.schedId);
+    if (used.length) return toast("This schedule is used on " + used.length + " changed day" + (used.length > 1 ? "s" : "") + ". Remove it from those days first.");
+    D.schedules = D.schedules.filter(x => x.id !== state.schedId); state.schedId = "full"; changed();
+  }
+  else if (a === "publish") publish();
+  else if (a === "quickcancel"){ state.quick = null; renderView(); const f = document.querySelector("#daymenu button"); if (f) f.focus(); }
+  else if (a === "quickgo"){
+    const copy = JSON.parse(JSON.stringify(DATA)), d = state.date, prev = copy.overrides[d] || {};
+    if (state.quick === "normal") delete copy.overrides[d];
+    else if (state.quick.startsWith("s:")){ const o = {schedule: state.quick.slice(2)}; if (prev.letter) o.letter = prev.letter; if (prev.note) o.note = prev.note; copy.overrides[d] = o; }
+    else if (state.quick === "closed"){ const o = {closed:true}; if (prev.note) o.note = prev.note; copy.overrides[d] = o; }
+    publish(copy, '[data-act="quickgo"]', "Publish now");
+  }
+  else if (a === "discard"){ draft = null; changed(); toast("Changes discarded."); }
+});
+document.addEventListener("change", ev => {
+  const t = ev.target;
+  if (t.id === "pick"){ if (t.value) setDate(t.value); return; }
+  if (t.dataset.day === "date"){ state.dayDate = t.value || null; renderAdmin(); return; }
+  if (t.dataset.bell === "pick"){ state.schedId = t.value; renderAdmin(); return; }
+  if (t.dataset.bell === "name"){ const v = t.value.trim(); if (!v) return renderAdmin(); ensureDraft().schedules.find(x => x.id === state.schedId).name = v; changed(); return; }
+  if (t.dataset.row != null && t.dataset.f){
+    const s = ensureDraft().schedules.find(x => x.id === state.schedId), r = s.rows[+t.dataset.row];
+    const v = t.value.trim(); if (!v && t.dataset.f !== "type") return renderAdmin();
+    r[t.dataset.f] = v; changed();
+  }
+});
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape" && state.menuOpen && !dlg.open){ ev.preventDefault(); closeMenu(true); }
+});
+/* ---------- start ---------- */
+renderView(); renderSaveBar();
+setInterval(() => {
+  const els = document.querySelectorAll("[data-cd]");
+  let done = false;
+  els.forEach(el => { const v = countdown(el.dataset.cd); el.textContent = v; if (v === "0:00") done = true; });
+  if (done && state.date === todayStr()) setTimeout(renderView, 1000);
+}, 1000);
+setInterval(() => { if (state.date === todayStr()) renderView(); }, 60000);
+(async () => {
+  try {
+    if (!window.claude || !window.claude.use){ capsChecked = true; return; }
+    const [art, user] = await Promise.all([window.claude.use("artifact"), window.claude.use("user")]);
+    ART = art;
+    if (ART){
+      if (user){
+        const [own, ed, fw] = await Promise.all([user.isOwner(), user.canEdit(), user.can("files.write")]);
+        canEdit = !!(own || ed || fw === true);
+      } else canEdit = true;   // no identity info: offer controls and let a refused publish decide
+    }
+  } catch(e){}
+  capsChecked = true;
+  renderView(); renderAdmin(); renderSaveBar();
+})();
+})();
+</script>
+</body></html>
